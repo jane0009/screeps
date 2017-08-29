@@ -4,9 +4,11 @@ possibleTasks.upgrading = require('upgrading');
 possibleTasks.building = require('building');
 possibleTasks.filling = require('filling');
 possibleTasks.carrying = require('carrying');
+possibleTasks.defending = require('defending');
 let tasks = [];
 
-let towerCode = require('tower')
+let towerCode = require('tower');
+let notWorking = require('notWorking');
 
 let profiler = require('screeps-profiler');
 profiler.enable();
@@ -19,7 +21,57 @@ module.exports.loop = function () {
         runCurrentlyAssignedTasks();
         determineNewTasks();
         runTowers();
+        manageMemory();
     })
+}
+
+function manageMemory() {
+    if (Math.ceil(Game.cpu.getUsed()) >= Game.cpu.limit) {
+        //console.log(Game.profiler.output());
+        if (!Memory.lastTick) {
+            Memory.lastTick = Game.time
+        } else {
+            if (Memory.lastTick + 10 < Game.time) {
+                delete Memory.lastTick;
+            } else {
+                if (!Memory.capped) {
+                    Memory.capped = true;
+                    delete Memory.lastTick;
+                } else {
+                    Memory.deferUpgrade = true;
+                    removeLowestTask();
+                    delete Memory.lastTick;
+                    delete Memory.capped;
+                }
+            }
+        }
+    }
+}
+
+function removeLowestTask() {
+    let curTasks = [];
+    for (creep in Game.creeps) {
+        if (Game.creeps[creep].memory.task && Game.creeps[creep].memory.task) {
+            curTasks.push(Game.creeps[creep].memory.task);
+            //console.log(Game.creeps[creep].memory.task.priority);
+        }
+    }
+    let sortedTasks = curTasks.sort(sortTasks);
+    let deleted = false;
+    for (creep in Game.creeps) {
+        if (!deleted && Game.creeps[creep].memory.task && Game.creeps[creep].memory.task.name === sortedTasks[sortedTasks.length - 1].name) {
+            delete Game.creeps[creep].memory.task;
+            Game.creeps[creep].memory.working = false;
+            for (m in Game.creeps[creep].memory) {
+                if (!(m == "working") && !(m == "preferredTask")) {
+                    //console.log("DELETE.." + m);
+                    delete Game.creeps[creep].memory[m];
+                }
+            }
+            deleted = true;
+            console.log("Deleted the task of " + Game.creeps[creep].name + ", who had the task " + sortedTasks[sortedTasks.length - 1].name + ".");
+        }
+    }
 }
 
 function checkDeadCreeps() {
@@ -49,7 +101,7 @@ function determineNewTasks() {
     for (task in possibleTasks) {
         for (spawn in Game.spawns) {
             //console.log(possibleTasks[task].name + " " + possibleTasks[task].priority + " " + Game.spawns[spawn].room.controller.level)
-            if (possibleTasks[task].condition(Game.spawns[spawn].room) && (possibleTasks[task].priority < Game.spawns[spawn].room.controller.level)) {
+            if (possibleTasks[task].condition(Game.spawns[spawn].room) && (possibleTasks[task].priority <= Game.spawns[spawn].room.controller.level)) {
                 //console.log("condition succeded");
                 tasks.push(possibleTasks[task]);
                 //console.log(task + " -- " + possibleTasks[task]);
@@ -63,6 +115,8 @@ function runCurrentlyAssignedTasks() {
     for (i in Game.creeps) {
         if (Game.creeps[i].memory.working == true) {
             possibleTasks[Game.creeps[i].memory.task.name].function(Game.creeps[i]);
+        } else {
+            notWorking.function(Game.creeps[i]);
         }
     }
 }
@@ -70,11 +124,11 @@ function runCurrentlyAssignedTasks() {
 function checkTasks() {
     if (tasks != [] && tasks != {} && tasks != "" && task != undefined) {
         let tasksName = [];
+        tasks.sort(sortTasks)
         for (i in tasks) {
             tasksName.push(tasks[i].name)
         }
-        tasks.sort(sortTasks)
-        //console.log("tasks: " + tasksName);
+        console.log("tasks: " + tasksName);
         for (i in tasks) {
             if (tasks[i].name) {
                 //console.log(tasks[i].name)
@@ -88,7 +142,7 @@ function checkTasks() {
 
 function assignTask(task) {
     if (!task.name) return;
-    let prevCreeps = [];
+    //let prevCreeps = [];
     for (i in Game.creeps) {
         if (!Game.creeps[i].memory.working) {
             //console.log("pref " + Game.creeps[i].memory.preferredTask + " act " + task.name);
@@ -128,7 +182,7 @@ function spawnNewWorker(task, spawner, room) {
     let mem = getMemory(task);
     let body = getBody(task, room.energyAvailable);
     //console.log("b " + body);
-    spawner.createCreep(body, undefined, mem);
+    spawner.createCreep(body, uuid(), mem);
 }
 
 function getMemory(task) {
@@ -140,8 +194,7 @@ function getMemory(task) {
 }
 
 function getBody(task, energy) {
-    let body = [];
-    body = task.bodyBase;
+    let body = task.bodyBase ? task.bodyBase : [];
     for (i in task.bodyBase) {
         if (energy >= BODYPART_COST[task.bodyBase[i]]) {
             energy -= BODYPART_COST[task.bodyBase[i]]
@@ -167,6 +220,12 @@ function getBody(task, energy) {
         loop++;
     }
     //console.log(energy)
+    for (part in body) {
+        if (body[part] == TOUGH) {
+            moveArr(body, part, 0);
+        }
+    }
+    //console.log(body);
     return body;
 }
 
@@ -201,4 +260,28 @@ function appraiseBody(task, creep) {
 //extend
 if (!Creep.prototype._moveTo) {
     Creep.prototype._moveTo = Creep.prototype.moveTo
+}
+
+function moveArr(array, old_index, new_index) {
+    if (new_index >= array.length) {
+        var k = new_index - array.length;
+        while ((k--) + 1) {
+            array.push(undefined);
+        }
+    }
+    array.splice(new_index, 0, array.splice(old_index, 1)[0]);
+    return array; // for testing purposes
+};
+function uuid() {
+    var result, i, j;
+    result = '';
+    for(j=0; j<24; j++) {
+      if( j == 8 || j == 12|| j == 16|| j == 20) {
+        result = result + '-';
+      }
+      i = Math.floor(Math.random()*16).toString(16).toUpperCase();
+      result = result + i;
+    }
+    result = result + '-' + Math.floor(Game.time).toString(16).toUpperCase();
+    return result;
 }

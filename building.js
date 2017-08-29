@@ -11,11 +11,12 @@ module.exports = {
                 for (i in sites) {
                     targs[sites[i].id] = sites[i].progress
                 }
-                let min = getMin(targs);
-                creep.memory.construct = min;
+                let max = getMax(targs);
+                creep.memory.construct = max;
             }
             if (Game.getObjectById(creep.memory.construct)) {
                 if (creep.carry.energy > 0) {
+                    creep.say("building...");
                     if (creep.build(Game.getObjectById(creep.memory.construct)) == ERR_NOT_IN_RANGE) {
                         creep.moveTo(Game.getObjectById(creep.memory.construct), {
                             visualizePathStyle: {
@@ -54,11 +55,23 @@ module.exports = {
             //creep.memory.construct = undefined;
             delete creep.memory.task;
             creep.memory.working = false;
+            for (m in creep.memory) {
+                if (!(m == "working") && !(m == "preferredTask")) {
+                    //console.log("DELETE.." + m);
+                    delete creep.memory[m];
+                }
+            }
         }
-        if (Object.size(Game.creeps) < 2 || creep.room.energyAvailable < 300) {
+        if (Object.size(Game.creeps) < 2 || creep.room.energyAvailable < 200) {
             //creep.memory.construct = undefined;
             delete creep.memory.task;
             creep.memory.working = false;
+            for (m in creep.memory) {
+                if (!(m == "working") && !(m == "preferredTask")) {
+                    //console.log("DELETE.." + m);
+                    delete creep.memory[m];
+                }
+            }
         }
     },
     condition: function (room) {
@@ -70,7 +83,7 @@ module.exports = {
                 num++;
             }
         }
-        if (num < (Object.size(sites)/2) && Object.size(sites) && (room.energyAvailable/2 > sites[0].progressTotal || room.energyAvailable >= room.energyCapacityAvailable)) {
+        if (num < (Object.size(sites) / 2)) {
             //console.log(num + " -- " + Object.size(sites))
             //console.log("true")
             return true;

@@ -1,9 +1,9 @@
 module.exports = {
-    name:"carrying",
-    priority:3,
-    bodyBase:[CARRY, MOVE, WORK],
-    bodyPartOrder:[CARRY, MOVE],
-    function: function(creep) {
+    name: "carrying",
+    priority: 2,
+    bodyBase: [CARRY, MOVE, WORK],
+    bodyPartOrder: [CARRY, MOVE],
+    function: function (creep) {
         if (!creep.memory.collecting && creep.carry.energy == 0) {
             creep.memory.collecting = true;
         }
@@ -11,11 +11,11 @@ module.exports = {
             creep.memory.collecting = false;
         }
 
-        if(creep.memory.collecting) {
+        if (creep.memory.collecting) {
             let res = creep.room.find(FIND_DROPPED_RESOURCES);
-            if(res.length){
+            if (res.length) {
                 creep.memory.pickup = true;
-                if(creep.pickup(res[0]) == ERR_NOT_IN_RANGE) {
+                if (creep.pickup(res[0]) == ERR_NOT_IN_RANGE) {
                     creep.moveTo(res[0], {
                         visualizePathStyle: {
                             stroke: '#00aaff'
@@ -23,39 +23,37 @@ module.exports = {
                         reusePath: 0
                     });
                 }
-            }
-            else {
+            } else {
                 creep.memory.pickup = false;
-            if(!creep.memory.awaiting) {
-                let miners = _.filter(Game.creeps, function(creepS) {
-            return creepS.memory.task && creepS.memory.task.name == "mining" && (!creepS.memory.beingAwaited)
-            })
-            let targs = {};
-            for(miner in miners) {
-                targs[miners[miner].id] = miners[miner].carry[RESOURCE_ENERGY];
-                //console.log(miners[miner].carry[RESOURCE_ENERGY]);
-            }
-            let max = getMax(targs);
-            //console.log(max);
-            creep.memory.awaiting = max[0];
-        }
-        if(!Game.getObjectById(creep.memory.awaiting) || !Game.getObjectById(creep.memory.awaiting).memory.task || !(Game.getObjectById(creep.memory.awaiting).memory.task.name == "mining")) {
-            delete creep.memory.awaiting;
-        }
-        if(Game.getObjectById(creep.memory.awaiting) && (Game.getObjectById(creep.memory.awaiting).carry[RESOURCE_ENERGY] == 0 || Game.getObjectById(creep.memory.awaiting).mining)) {
-            delete creep.memory.awaiting;
-        }
-        if(Game.getObjectById(creep.memory.awaiting) && !Game.getObjectById(creep.memory.awaiting).memory.canTransfer) {
-            creep.moveTo(Game.getObjectById(creep.memory.awaiting), {
+                if (!creep.memory.awaiting) {
+                    let miners = _.filter(Game.creeps, function (creepS) {
+                        return creepS.memory.task && creepS.memory.task.name == "mining" && (!creepS.memory.beingAwaited)
+                    })
+                    let targs = {};
+                    for (miner in miners) {
+                        targs[miners[miner].id] = miners[miner].carry[RESOURCE_ENERGY];
+                        //console.log(miners[miner].carry[RESOURCE_ENERGY]);
+                    }
+                    let max = getMax(targs);
+                    //console.log(max);
+                    creep.memory.awaiting = max[0];
+                }
+                if (!Game.getObjectById(creep.memory.awaiting) || !Game.getObjectById(creep.memory.awaiting).memory.task || !(Game.getObjectById(creep.memory.awaiting).memory.task.name == "mining")) {
+                    delete creep.memory.awaiting;
+                }
+                if (Game.getObjectById(creep.memory.awaiting) && (Game.getObjectById(creep.memory.awaiting).carry[RESOURCE_ENERGY] == 0 || Game.getObjectById(creep.memory.awaiting).mining)) {
+                    delete creep.memory.awaiting;
+                }
+                if (Game.getObjectById(creep.memory.awaiting) && !Game.getObjectById(creep.memory.awaiting).memory.canTransfer) {
+                    creep.moveTo(Game.getObjectById(creep.memory.awaiting), {
                         visualizePathStyle: {
                             stroke: '#00aaff'
                         },
                         reusePath: 0
                     });
-        }
-        }
-        }
-        else {
+                }
+            }
+        } else {
             delete creep.memory.awaiting;
             var targets = creep.room.find(FIND_STRUCTURES, {
                 filter: (structure) => {
@@ -66,7 +64,10 @@ module.exports = {
             if (targets.length > 0 && (targets[0].energy < targets[0].energyCapacity)) {
                 let targs = {};
                 for (targ in targets) {
-                    targs[targets[targ].id] = targets[targ].energy
+                    if(!targets[targ].memory) return;
+                    if (targets[targ].memory.beingAwaited == false) {
+                        targs[targets[targ].id] = targets[targ].energy
+                    }
                 }
                 let min = getMin(targs);
                 let minObjs = [];
@@ -104,32 +105,37 @@ module.exports = {
 
 
 
-        let miners = _.filter(Game.creeps, function(creep) {
+        let miners = _.filter(Game.creeps, function (creep) {
             return creep.memory.task && creep.memory.task.name == "mining"
         })
         let num = miners.length / 1.5
-        let carriers = _.filter(Game.creeps, function(creep) {
+        let carriers = _.filter(Game.creeps, function (creep) {
             return creep.memory.task && creep.memory.task.name == "carrying"
         })
-        if(carriers.length > num && !creep.awaiting) {
-            delete creep.memory.pickup;
-            delete creep.memory.collecting;
+        if (carriers.length > num && !creep.awaiting) {
             delete creep.memory.task;
             creep.memory.working = false;
+            for (m in creep.memory) {
+                if (!(m == "working") && !(m == "preferredTask")) {
+                    //console.log("DELETE.." + m);
+                    delete creep.memory[m];
+                }
+            }
         }
     },
-    condition: function(room) {
-        let miners = _.filter(Game.creeps, function(creep) {
+    condition: function (room) {
+        let miners = _.filter(Game.creeps, function (creep) {
             return creep.memory.task && creep.memory.task.name == "mining"
         })
         let num = miners.length / 1.5
-        let carriers = _.filter(Game.creeps, function(creep) {
+        let carriers = _.filter(Game.creeps, function (creep) {
             return creep.memory.task && creep.memory.task.name == "carrying"
         })
-        if(carriers.length < num) return true;
+        if (carriers.length < num) return true;
         return false;
     }
 }
+
 function getMax(obj) {
     let maxArr = [];
     let arr = Object.keys(obj).map(function (key) {
@@ -143,6 +149,7 @@ function getMax(obj) {
     }
     return maxArr;
 }
+
 function getMin(obj) {
     let minArr = [];
     let arr = Object.keys(obj).map(function (key) {

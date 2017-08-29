@@ -6,9 +6,11 @@ module.exports = {
     function: function (creep) {
         if (creep.memory.filling && creep.carry.energy == 0) {
             creep.memory.filling = false;
+            creep.memory.lastTick = Game.time;
         }
-        if (!creep.memory.filling && creep.carry.energy == creep.carryCapacity) {
+        if (!creep.memory.filling && (creep.carry.energy == creep.carryCapacity || Game.time > creep.memory.lastTick + 20)) {
             creep.memory.filling = true;
+            delete creep.memory.lastTick;
         }
         let towers = creep.room.find(FIND_MY_STRUCTURES, {
             filter: (s) => {
@@ -16,9 +18,14 @@ module.exports = {
             }
         })
         if (!towers.length) {
-            delete creep.memory.filling;
             delete creep.memory.task;
             creep.memory.working = false;
+            for (m in creep.memory) {
+                if (!(m == "working") && !(m == "preferredTask")) {
+                    //console.log("DELETE.." + m);
+                    delete creep.memory[m];
+                }
+            }
         } else {
             if (creep.memory.filling) {
                 if (creep.transfer(towers[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
@@ -62,16 +69,16 @@ module.exports = {
     condition: function (room) {
         let towers = room.find(FIND_MY_STRUCTURES, {
             filter: (s) => {
-                return s.structureType == STRUCTURE_TOWER && s.energy < (s.energyCapacity/2)
+                return s.structureType == STRUCTURE_TOWER && s.energy < (s.energyCapacity / 2)
             }
         })
         let num = 0;
-        for(i in Game.creeps) {
-            if(Game.creeps[i].task && Game.creeps[i].memory.task.name == "filling") {
+        for (i in Game.creeps) {
+            if (Game.creeps[i].task && Game.creeps[i].memory.task.name == "filling") {
                 num++;
             }
         }
-        if (num < 1 && towers.length&& room.energyAvailable > 500) return true;
+        if (num < 1 && towers.length && room.energyAvailable > 300) return true;
         return false;
     }
 }

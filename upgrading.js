@@ -5,13 +5,26 @@ module.exports = {
     bodyPartOrder: [WORK, MOVE, CARRY],
     function: function (creep) {
         //console.log("ran upgrading function " + creep.name);
+        if(Memory.deferUpgrade && creep.room.controller.ticksToDowngrade < 5000) {
+            delete Memory.deferUpgrade;
+        }
         if (creep.memory.upgrading && creep.carry.energy == 0) {
             creep.memory.upgrading = false;
         }
         if (!creep.memory.upgrading && creep.carry.energy == creep.carryCapacity) {
             creep.memory.upgrading = true;
         }
+        let builders = _.filter(Game.creeps, function (creep) {
+            return creep.memory.task && creep.memory.task.name == "building"
+        })
+        if (_.size(creep.room.find(FIND_CONSTRUCTION_SITES)) && !_.size(builders) && creep.room.controller.ticksToDowngrade > 5000) {
+            require('building').function(creep);
+        }
         if (creep.memory.upgrading) {
+            if(Memory.deferUpgrade) {
+                creep.memory.upgrading = false;
+                return;
+            }
             if (creep.upgradeController(creep.room.controller) == ERR_NOT_IN_RANGE) {
                 creep.say('praise GCL')
                 creep.moveTo(creep.room.controller, {
@@ -51,10 +64,18 @@ module.exports = {
                 });
             }
         }
-        if (creep.room.controller.level >= 8 || (Game.time % 100 == 0 && creep.carry.energy == 0)) {
+        let upgraders = _.filter(Game.creeps, function (creep) {
+            return creep.memory.task && creep.memory.task.name == "upgrading"
+        })
+        if (_.size(upgraders) > findSpacesController(creep.room.controller)) {
             delete creep.memory.task;
-            delete creep.memory.upgrading;
             creep.memory.working = false;
+            for (m in creep.memory) {
+                if (!(m == "working") && !(m == "preferredTask")) {
+                    //console.log("DELETE.." + m);
+                    delete creep.memory[m];
+                }
+            }
         }
     },
     condition: function (room) {
@@ -63,16 +84,17 @@ module.exports = {
             //console.log("downgrade less");
             return true;
         }
-        if (room.controller.level == 8) {
+        if (room.controller.level == 8 && !Game.time % 15 == 0) {
             return false;
         }
         let num = 0;
         for (creep in Game.creeps) {
             if (Game.creeps[creep].memory.task && Game.creeps[creep].memory.task.name == "upgrading") num++;
         }
-        if(num > room.controller.level) return false;
-        let percent = Math.ceil(Object.size(Game.creeps) * .4);
-        if (num < percent && Game.time % 25 == 0) {
+        //if(num > room.controller.level) return false;
+        let spaces = findSpacesController(room.controller);
+        if (num < 1) return true;
+        if (num < spaces && Game.time % 25 == 0) {
             //console.log("num less");
             return true;
         }
@@ -101,3 +123,17 @@ Object.size = function (obj) {
     }
     return size;
 };
+
+function findSpacesController(source) {
+    let num = 0;
+    if (!source || !source.pos) return 0;
+    let pos = source.pos;
+    for (i = pos.x - 2; i <= pos.x + 2; i++) {
+        for (j = pos.y - 2; j <= pos.y + 2; j++) {
+            let look = new RoomPosition(i, j, source.room.name).lookFor(LOOK_TERRAIN);
+            if (look[0] !== "wall") num++;
+        }
+    }
+    //console.log(num);
+    return num / 2;
+}

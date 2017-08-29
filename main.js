@@ -17,16 +17,22 @@ profiler.enable();
 module.exports.loop = function () {
     profiler.wrap(function () {
         checkDeadCreeps();
-        checkTasks();
-        runCurrentlyAssignedTasks();
-        determineNewTasks();
+        if (Game.cpu.bucket >= 5000) {
+            checkTasks();
+            runCurrentlyAssignedTasks();
+            determineNewTasks();
+        }
         runTowers();
         manageMemory();
+        if(Memory.deferUpgrade) {
+            console.log("Deferring upgrading for 20+ ticks");
+        }
     })
 }
 
 function manageMemory() {
-    if (Math.ceil(Game.cpu.getUsed()) >= Game.cpu.limit) {
+    if (Math.ceil(Game.cpu.getUsed()) >= Game.cpu.tickLimit || Game.cpu.bucket < 9000) {
+        console.log(Game.cpu.getUsed() + "//" + Game.cpu.bucket);
         //console.log(Game.profiler.output());
         if (!Memory.lastTick) {
             Memory.lastTick = Game.time
@@ -38,7 +44,7 @@ function manageMemory() {
                     Memory.capped = true;
                     delete Memory.lastTick;
                 } else {
-                    Memory.deferUpgrade = true;
+                    if (!Memory.deferUpgrade) Memory.deferUpgrade = Game.time;
                     removeLowestTask();
                     delete Memory.lastTick;
                     delete Memory.capped;
@@ -182,7 +188,7 @@ function spawnNewWorker(task, spawner, room) {
     let mem = getMemory(task);
     let body = getBody(task, room.energyAvailable);
     //console.log("b " + body);
-    spawner.createCreep(body, uuid(), mem);
+    spawner.createCreep(body, uuid(12), mem);
 }
 
 function getMemory(task) {
@@ -272,15 +278,16 @@ function moveArr(array, old_index, new_index) {
     array.splice(new_index, 0, array.splice(old_index, 1)[0]);
     return array; // for testing purposes
 };
-function uuid() {
+
+function uuid(length = 24) {
     var result, i, j;
     result = '';
-    for(j=0; j<24; j++) {
-      if( j == 8 || j == 12|| j == 16|| j == 20) {
-        result = result + '-';
-      }
-      i = Math.floor(Math.random()*16).toString(16).toUpperCase();
-      result = result + i;
+    for (j = 0; j < length; j++) {
+        if (j >= 8 && j % 4 == 0) {
+            result = result + '-';
+        }
+        i = Math.floor(Math.random() * 16).toString(16).toUpperCase();
+        result = result + i;
     }
     result = result + '-' + Math.floor(Game.time).toString(16).toUpperCase();
     return result;

@@ -181,6 +181,7 @@ module.exports = {
         }
     },
     condition: function (room) {
+        if(room.energyAvailable >= room.energyCapacityAvailable) return false;
         let num = 0;
         for (creep in Game.creeps) {
             if (Game.creeps[creep].memory.task && Game.creeps[creep].memory.task.name == "mining") num++;

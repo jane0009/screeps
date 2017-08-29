@@ -5,7 +5,7 @@ module.exports = {
     bodyPartOrder: [WORK, MOVE, CARRY],
     function: function (creep) {
         //console.log("ran upgrading function " + creep.name);
-        if(Memory.deferUpgrade && creep.room.controller.ticksToDowngrade < 5000) {
+        if(Memory.deferUpgrade + 10 < Game.time || creep.room.controller.ticksToDowngrade < 7000) {
             delete Memory.deferUpgrade;
         }
         if (creep.memory.upgrading && creep.carry.energy == 0) {

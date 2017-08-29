@@ -5,6 +5,11 @@ module.exports = {
     bodyPartOrder: [WORK, CARRY, MOVE],
     function: function (creep) {
         let sites = creep.room.find(FIND_CONSTRUCTION_SITES)
+        let structs = creep.room.find(FIND_STRUCTURES, {
+            filter: (s) => {
+                return (s.structureType == STRUCTURE_ROAD && s.hits < s.hitsMax) || (s.hits < s.hitsMax && s.hits < 5000)
+            }
+        })
         if (Object.size(sites)) {
             if (!creep.memory.construct) {
                 let targs = {};
@@ -50,6 +55,15 @@ module.exports = {
                 }
             } else {
                 creep.memory.construct = undefined;
+            }
+        } else if (_.size(structs)) {
+            if (creep.repair(structs[0]) == ERR_NOT_IN_RANGE) {
+                creep.moveTo(structs[0], {
+                    visualizePathStyle: {
+                        stroke: '#00aaff'
+                    },
+                    reusePath: 50
+                });
             }
         } else {
             //creep.memory.construct = undefined;

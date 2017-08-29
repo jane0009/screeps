@@ -54,6 +54,7 @@ module.exports = {
                 }
             }
         } else {
+            //console.log("NOT COLLECTING")
             delete creep.memory.awaiting;
             var targets = creep.room.find(FIND_STRUCTURES, {
                 filter: (structure) => {
@@ -61,14 +62,15 @@ module.exports = {
                         structure.energy < structure.energyCapacity;
                 }
             });
-            if (targets.length > 0 && (targets[0].energy < targets[0].energyCapacity)) {
+            //console.log(targets.length)
+            if (targets.length > 0) {
+                //console.log("len" +targets.length)
                 let targs = {};
                 for (targ in targets) {
-                    if(!targets[targ].memory) return;
-                    if (targets[targ].memory.beingAwaited == false) {
+                    if(!Game.getObjectById(targets[targ].id)) return;
                         targs[targets[targ].id] = targets[targ].energy
-                    }
                 }
+                //console.log("targs"+targs)
                 let min = getMin(targs);
                 let minObjs = [];
                 for (i in min) {

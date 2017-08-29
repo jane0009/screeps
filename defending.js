@@ -6,14 +6,30 @@ module.exports = {
     function: function (creep) {
         let hostiles = creep.room.find(FIND_HOSTILE_CREEPS);
         //TODO get some better code dammit
+        let body = creep.body;
+        let hasRanged = false;
+        for(part in body) {
+            if(body[part] == RANGED_ATTACK) hasRanged = true;
+        }
         if (hostiles.length) {
             if (creep.attack(hostiles[0]) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(hostiles[0], {
+                if(hasRanged && creep.rangedAttack(hostiles[0])==ERR_NOT_IN_RANGE) {
+                    creep.moveTo(hostiles[0], {
+                    visualizePathStyle: {
+                        stroke: '#ffaaff'
+                    },
+                    reusePath: 25,
+                    range:10
+                })
+                }
+                else {
+                    creep.moveTo(hostiles[0], {
                     visualizePathStyle: {
                         stroke: '#ffaaff'
                     },
                     reusePath: 25
                 })
+                }
             }
         } else {
             if (Game.flags["Recall"]) {

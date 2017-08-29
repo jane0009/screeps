@@ -14,9 +14,10 @@ module.exports = {
         } else {
             let structure = tower.pos.findClosestByRange(FIND_STRUCTURES, {
                 filter: (s) => {
-                    return s.hits < s.hitsMax
+                    return (s.structureType == STRUCTURE_ROAD && s.hits < s.hitsMax) || (s.hits < s.hitsMax && s.hits < 5000)
                 }
             })
+            //console.log(structure)
             if (structure) {
                 tower.repair(structure)
             }

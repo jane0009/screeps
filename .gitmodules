@@ -1,0 +1,6 @@
+[submodule "src/Traveler"]
+	path = src/Traveler
+	url = https://github.com/bonzaiferroni/Traveler
+[submodule "src/screeps-pathfinding"]
+	path = src/screeps-pathfinding
+	url = https://github.com/nescafe62/screeps-pathfinding

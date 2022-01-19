@@ -1,4 +1,7 @@
 import { ErrorMapper } from "utils/ErrorMapper";
+import profiler from "screeps-profiler";
+import { run } from './bootstrap';
+import Pathing from './screeps-pathfinding/pathing.js';
 
 declare global {
   /*
@@ -29,15 +32,25 @@ declare global {
   }
 }
 
+profiler.enable();
+
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 export const loop = ErrorMapper.wrapLoop(() => {
-  console.log(`Current game tick is ${Game.time}`);
-
-  // Automatically delete memory of missing creeps
-  for (const name in Memory.creeps) {
-    if (!(name in Game.creeps)) {
-      delete Memory.creeps[name];
+  profiler.wrap(() => {
+    console.log(`Current game tick is ${Game.time}`);
+    let spawn = Game.spawns[Object.keys(Game.spawns)[0]];
+    if (spawn.room.controller && spawn.room.controller.level < 2) {
+      console.log("bootstrapping...");
+      for (const creep in Game.creeps) {
+        run(Game.creeps[creep]);
+      }
     }
-  }
+    // Automatically delete memory of missing creeps
+    for (const name in Memory.creeps) {
+      if (!(name in Game.creeps)) {
+        delete Memory.creeps[name];
+      }
+    }
+  })
 });

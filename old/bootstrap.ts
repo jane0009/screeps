@@ -1,5 +1,5 @@
 
-export const run = (creep: Creep) => {
+const run = (creep: Creep) => {
   console.log(`running for ${creep.name}`);
   let spawn = Game.spawns[Object.keys(Game.spawns)[0]];
   let room = spawn.room;
@@ -40,5 +40,28 @@ export const run = (creep: Creep) => {
         creep.moveTo(controller);
       }
     }
+  }
+}
+
+export const boostrap = (spawn: StructureSpawn) => {
+  console.log("bootstrapping...");
+  if (Object.keys(Game.creeps).length < 2) {
+    if (Memory.id == undefined) Memory.id = 0;
+    if (spawn.store.energy > 250) {
+      spawn.spawnCreep([WORK, MOVE, CARRY], `${++Memory.id}`, {
+        memory: {
+          bootstrap: true,
+          working: false,
+          assigned: false,
+          targets: {}
+        }
+      });
+    }
+  }
+  for (const creep in Game.creeps) {
+    run(Game.creeps[creep]);
+  }
+  if (!spawn.room.controller?.safeMode && spawn.room.controller?.safeModeAvailable) {
+    spawn.room.controller.activateSafeMode();
   }
 }

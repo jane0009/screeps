@@ -1,0 +1,36 @@
+// TODO
+// migrate creep deletion out of game loop to allow for deferral (e.g. when low on cpu)
+// cpu governor - focus on keeping the cpu bucket at least half-full and executing computations (e.g. running creeps) only if cpu is available
+// bootstrap ensures the RCL is always at least 2, so upgrading does not need to be the highest priority
+//
+// execution order should look like:
+// (0). active defense while being attacked
+// 1. harvesting and filling energy stores in the room
+// 2. building active construction sites
+// 3. navigating creeps that are not working out of the path of working creeps
+// 4. checking spawn conditions for roles and handling the spawning queue
+// 5. passively upgrading RCL
+// 6. determining construction candidates
+// 7-N. passive defending (sitting grouped near exits), attacking, chems, etc.
+//
+// potentially swap 2 and 3 depending on if creeps get stuck consistently blocking the path of others
+//
+//
+// convert pathing.js into pathing.ts
+// make pathing.ts use the cache
+//
+// more advanced cpu governance
+// class meant to provision cpu cycles -
+// has a list of active functions and goes down
+// that list in order, keeping track of the average
+// cpu it takes for profiling purposes
+// ((old average * old num datapoints) + new datapoint) / new num datapoints
+//
+// upgrader role
+//
+// building extensions around the spawn in an accessible pattern
+// building walls and ramparts
+//
+// builder role, keeps track of walls and ramparts and keeps them above a certain hitpoint threshold
+//
+// active defense -> check all paths for hostiles

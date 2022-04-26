@@ -1,3 +1,1 @@
-
-export default class Kernel {
-}
+export default class Kernel {}

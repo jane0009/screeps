@@ -1,5 +1,3 @@
 import Process from "./Process";
 
-export default class Scheduler extends Process {
-
-}
+export default class Scheduler extends Process {}

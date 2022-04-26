@@ -68,10 +68,10 @@
   },
   "dependencies": {
     "base32768": "^2.0.2",
+    "buffer": "^6.0.3",
     "screeps-cache": "^1.0.12",
     "screeps-inscribe": "^0.2.0",
     "screeps-profiler": "^2.0.1",
-    "source-map": "~0.6.1",
-    "zlib": "^1.0.5"
+    "source-map": "~0.6.1"
   }
 }

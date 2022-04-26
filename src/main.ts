@@ -1,22 +1,8 @@
 import { ErrorMapper } from "lib/ErrorMapper";
-import Process from "os/Process";
-// import profiler from "screeps-profiler";
-import Inscribe from 'screeps-inscribe';
-import Logger from './lib/Logger';
-import { Storeable } from './os/Storage';
+import Inscribe from "screeps-inscribe";
+import Logger from "./lib/Logger";
+// import Process from "os/Process";
 
-declare global {
-
-  // Syntax for adding proprties to `global` (ex "global.log")
-  namespace NodeJS {
-    interface Global {
-      Inscribe: any;
-      Logger: Logger;
-    }
-  }
-}
-
-// profiler.enable();
 global.Inscribe = Inscribe();
 global.Logger = new Logger();
 
@@ -24,6 +10,13 @@ global.Logger = new Logger();
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 export const loop = ErrorMapper.wrapLoop(() => {
   global.Logger.debug(`Current game tick is ${Game.time}`);
-  let s = new Process(0, 0, 0);
-  console.log(s.serialize());
+  // const s = new Process(0, 0, 0);
+
+  // s.junkData(20);
+
+  // const serialized = s.serialize();
+  // console.log(serialized);
+
+  // const deserialized = Process.deserialize(serialized);
+  // console.log(JSON.stringify(deserialized));
 });

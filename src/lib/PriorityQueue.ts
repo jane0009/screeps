@@ -1,28 +1,28 @@
 export default class PriorityQueue<Type> {
   private _queue: Type[] = [];
-  private compare_fn: (a: Type, b: Type) => number;
+  private compareFn: (a: Type, b: Type) => number;
 
-  constructor(compare_fn: (a: Type, b: Type) => number) {
-    this.compare_fn = compare_fn;
+  public constructor(compareFn: (a: Type, b: Type) => number) {
+    this.compareFn = compareFn;
   }
 
-  private _sort() {
-    this._queue.sort(this.compare_fn);
+  private _sort(): void {
+    this._queue.sort(this.compareFn);
   }
 
-  push(value: Type) {
+  public push(value: Type): void {
     this._queue.push(value);
     this._sort();
   }
-  pop(): Type | undefined {
+  public pop(): Type | undefined {
     return this._queue.shift();
   }
 
-  top(): Type | undefined {
+  public top(): Type | undefined {
     return this._queue?.[0];
   }
 
-  clear() {
+  public clear(): void {
     this._queue = [];
   }
 }

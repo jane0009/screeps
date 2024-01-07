@@ -1,43 +1,115 @@
-import { ErrorMapper } from "utils/ErrorMapper";
+import { CONSTANTS, KERNEL } from "system";
+import { LOGGING } from "utils";
+import { ERROR_MAPPER } from "utils/error_mapper";
+import "./extends";
+import { loop as minimal_ai } from "./minimal_ai";
+import "./utils/client_abuse";
 
-declare global {
-  /*
-    Example types, expand on these or remove them and add your own.
-    Note: Values, properties defined here do no fully *exist* by this type definiton alone.
-          You must also give them an implemention if you would like to use them. (ex. actually setting a `role` property in a Creeps memory)
+// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+if (global.client_abuse?.inject_room_tracker) global.client_abuse.inject_room_tracker();
+// runs only on reload
+global.log_manager = new LOGGING.LOG_MANAGER(CONSTANTS.KERNEL_LOG_LEVEL);
+global.performance_log = global.log_manager.get_logger("Performance");
+const kernel = new KERNEL();
+kernel.init();
+global.log_manager.blacklist_all(["Performance", "Kernel_Pedantic"]);
 
-    Types added in this `global` block are in an ambient, global context. This is needed because `main.ts` is a module file (uses import or export).
-    Interfaces matching on name from @types/screeps will be merged. This is how you can extend the 'built-in' interfaces from @types/screeps.
-  */
-  // Memory extension samples
-  interface Memory {
-    uuid: number;
-    log: any;
-  }
-
-  interface CreepMemory {
-    role: string;
-    room: string;
-    working: boolean;
-  }
-
-  // Syntax for adding proprties to `global` (ex "global.log")
-  namespace NodeJS {
-    interface Global {
-      log: any;
-    }
-  }
-}
-
-// When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
-// This utility uses source maps to get the line numbers and file names of the original, TS source code
-export const loop = ErrorMapper.wrapLoop(() => {
-  console.log(`Current game tick is ${Game.time}`);
-
-  // Automatically delete memory of missing creeps
-  for (const name in Memory.creeps) {
-    if (!(name in Game.creeps)) {
-      delete Memory.creeps[name];
-    }
-  }
+export const loop = ERROR_MAPPER.wrap_loop(() => {
+  minimal_ai();
+  kernel.tick();
 });
+
+// respawn in w8n3
+
+/**
+ * GOALS:
+ * - use enums for everything possible to minimize memory cost
+ * - cache as much as possible, make a custom cache with LRU and TTL - base it off the max amount of memory available
+ *   - have reserved memory and undeletable cache objects
+ *   - extend main game objects (creep, source, etc.) to use cached memory
+ * - task system, each task has an internal priority, list of required body parts and a map of body part to preference (e.g. mining would be [WORK: 3, CARRY: 2, MOVE: 3]), tries to spawn find & assign bots closest to this ratio
+ *   - allow negative priorities to discourage a part
+ * - creeps keep track of list of TASK SUITABILITY AS NUMBER [0,1], and any task relevant memory
+ * - sources have the number of open spaces, a map of creep -> time to depletion
+ * - spawns have spawn queue as list of tasks and not list of creeps
+ *
+ * - cpu limit calculated based on max cpu and bucket
+ *
+ * - scheduler
+ *   - multi level feedback queue
+ *   - number of queues, algorithm per queue, upgrade/demote method, method to first determine queue
+ *
+ * - tasks:
+ *   - tasks handle everything, they are the analogue to processes
+ *   - priority, game object type it works on
+ *   - tasks for e.g. source availability calculation are done as the source
+ *   - scheduling considerations:
+ *     - active/passive distinction
+ *     - priority levels: idle, below normal, normal, above normal, high, realtime
+ *     - relative priorities: idle, lowest, below normal, normal, above normal, highest, time critical
+ *       - relative priority starts at normal, goes up or down based on age and amount of cpu taken in the past
+ *     - load: trivial, low, medium, high, tremendous
+ *     - time waiting in queue
+ *   - preemption?
+ *   - task state: new, running, waiting, ready, terminated
+ *   - ready queue, wait queue
+ *   - game objects being used by a task are considered its resources
+ *   - task exit types, exit() or abort()
+ *   - parent => child, pids
+ *   - waiting (time based / event based / hybrid?)
+ *   - shared memory / ipc
+ *
+ * - infrastructure state, locks certain tasks from running
+ *   - bootstrap, stabilizing, stable, expanding, sprawling
+ *   - warring flag
+ *
+ * - exploration system to find expansion candidates
+ * - automated placement of buildings, walls, ramparts, roads
+ * - automated upkeep of structures and creeps based on rebuild vs repair cost
+ *
+ * - misc:
+ *   - fancy logging
+ *   - voice logging for important messages
+ *   - good path candidates & movement code (autobahn)
+ *
+ * - long-term, sift through the unconverted scripts
+ */
+
+/**
+ * priorities:
+ * --------[name]--------[priority]---[active/passive]---[estimated load]---
+ * | scheduler         |  realtime  |      active      |       medium      |
+ * |-------------------|------------|------------------|-------------------|
+ * | event waiting     |  realtime  |      passive     |       medium      |
+ * |-------------------|------------|------------------|-------------------|
+ * | mining            |    high    |      active      |       medium      |
+ * |-------------------|------------|------------------|-------------------|
+ * | defending         |    high    |      active      |        high       |
+ * |-------------------|------------|------------------|-------------------|
+ * | attacking         |    high    |      active      |    tremendous     |
+ * |-------------------|------------|------------------|-------------------|
+ * | collect resources |            |                  |                   |
+ * | from decayed      |    high    |      passive     |        low        |
+ * | objects           |            |                  |                   |
+ * |-------------------|------------|------------------|-------------------|
+ * | towers            |    high    |      passive     |       medium      |
+ * |-------------------|------------|------------------|-------------------|
+ * | prevent rcl decay |    high    |      active      |        low        |
+ * |-------------------|------------|------------------|-------------------|
+ * | building          |   above    |      passive     |        low        |
+ * |                   |   normal   |                  |                   |
+ * |-------------------|------------|------------------|-------------------|
+ * | upgrade to next   |   normal   |      active      |        low        |
+ * | rcl               |            |                  |                   |
+ * |-------------------|------------|------------------|-------------------|
+ * | structure         |   normal   |      passive     |      trivial      |
+ * | calculations      |            |                  |                   |
+ * |-------------------|------------|------------------|-------------------|
+ * | planning          |   below    |      passive     |        high       |
+ * |                   |   normal   |                  |                   |
+ * |-------------------|------------|------------------|-------------------|
+ * | exploring         |    low     |      passive     |       medium      |
+ * |-------------------|------------|------------------|-------------------|
+ * | visuals           |    low     |      passive     |       medium      |
+ * -------------------------------------------------------------------------
+ */

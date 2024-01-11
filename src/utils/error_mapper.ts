@@ -2,12 +2,22 @@
 /* eslint-disable snakecasejs/snakecasejs */
 import { SourceMapConsumer } from "source-map";
 
+/**
+ * maps js errors to their typescript source
+ *
+ * @class
+ */
 export class ERROR_MAPPER {
   // Cache previously mapped traces to improve performance
   public static cache: { [key: string]: string } = {};
   // Cache consumer
   private static _consumer?: SourceMapConsumer;
 
+  /**
+   * gets the source map consumer
+   *
+   * @returns {SourceMapConsumer} the source map consumer
+   */
   public static get consumer(): SourceMapConsumer {
     if (this._consumer == null) {
       this._consumer = new SourceMapConsumer(require("main.js.map"));
@@ -69,6 +79,12 @@ export class ERROR_MAPPER {
     return out_stack;
   }
 
+  /**
+   * wraps a loop in a try/catch block that will display a source-mapped stack trace
+   *
+   * @param {() => void} loop the loop to wrap
+   * @returns {() => void} the wrapped loop
+   */
   public static wrap_loop(loop: () => void): () => void {
     return () => {
       try {

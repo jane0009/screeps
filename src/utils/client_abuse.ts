@@ -2,6 +2,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { CONSTANTS } from "system";
 
+/**
+ * used for injection
+ *
+ * @param {string} inject_message the message to show in console
+ * @param {string} text the actual script text to inject
+ */
 const replace_log = (inject_message: string, text: string) => {
   const inject_text = `<span style="${CONSTANTS.CLIENT_ABUSE_INJECT_MESSAGE_STYLE}">${inject_message}</span>`;
   console.log(inject_text, text.replace(/(\r\n|\n|\r)\t+|(\r\n|\n|\r) +|(\r\n|\n|\r)/gm, ""));
@@ -9,6 +15,10 @@ const replace_log = (inject_message: string, text: string) => {
 
 // realizing, this is actually basically useless. oh well!
 /**
+ * injects console summary, a script to clear and summarize the past console messages
+ *
+ * @param {string} keep_regex regex used to determine which messages to keep
+ * @param {number} message_limit number of messages to keep
  * @deprecated broken, unnecessary
  */
 const inject_console_summary = (
@@ -72,7 +82,10 @@ const inject_console_summary = (
 };
 
 /**
- * @deprecated
+ * starts the timers for {@link inject_console_summary}
+ *
+ * @param {number} check_interval how often to run the check timer
+ * @deprecated see {@link inject_console_summary}
  */
 const start_console_summary_timer = (check_interval: number = CONSTANTS.CLIENT_ABUSE_DEFAULT_TIMER_CHECK_INTERVAL) => {
   const script = `<script>
@@ -86,7 +99,9 @@ const start_console_summary_timer = (check_interval: number = CONSTANTS.CLIENT_A
 };
 
 /**
- * @deprecated
+ * enables the {@link inject_console_summary} script
+ *
+ * @deprecated see {@link inject_console_summary}
  */
 const enable_console_summary = () => {
   const script = `<script>window._console_summary_enable = true;</script>`;
@@ -94,7 +109,9 @@ const enable_console_summary = () => {
 };
 
 /**
- * @deprecated
+ * disables the {@link inject_console_summary} script
+ *
+ * @deprecated see {@link inject_console_summary}
  */
 const disable_console_summary = () => {
   const script = `<script>window._console_summary_enable = false;</script>`;
@@ -102,6 +119,8 @@ const disable_console_summary = () => {
 };
 
 /**
+ * injects room view notifier, a script to set a memory value of the currently viewed room; used for visuals
+ *
  * @deprecated only works in browser, replaced by RoomTracker
  */
 const inject_room_view_notifier = () => {
@@ -128,7 +147,9 @@ const inject_room_view_notifier = () => {
 };
 
 /**
- * @deprecated
+ * starts the timers for {@link inject_room_view_notifier}
+ *
+ * @deprecated see {@link inject_room_view_notifier}
  */
 const start_room_view_notifier_timer = () => {
   const script = `<script>
@@ -141,6 +162,11 @@ const start_room_view_notifier_timer = () => {
   replace_log("Starting RoomViewNotifier Timer", script);
 };
 
+/**
+ * injects the room tracker, a replacement for {@link inject_room_view_notifier} that tracks all rooms viewed in the past {@link check_interval} ticks
+ *
+ * @param {number} check_interval how often to check the active room
+ */
 const inject_room_tracker = (check_interval: number = CONSTANTS.CLIENT_ABUSE_ROOM_TRACKER_CHECK_INTERVAL) => {
   global.client_abuse.injected ??= {};
   if (!global.client_abuse.injected.room_tracker) {
@@ -150,14 +176,28 @@ const inject_room_tracker = (check_interval: number = CONSTANTS.CLIENT_ABUSE_ROO
     let Api = angular.element($('section.game')).injector().get('Api');
     let Connection = angular.element($('body')).injector().get('Connection');
     let roomScope = angular.element(document.getElementsByClassName("room ng-scope")).scope();
+    Connection.getMemoryByPath(null, "rooms").then(
+        function(roomsObj) {
+          if (!roomsObj) {
+            Connection.setMemoryByPath(null, "rooms", {});
+          }
+        }
+      );
     Connection.onRoomUpdate(roomScope, function() {
       let roomName = roomScope.Room.roomName;
       let tick = roomScope.Room.gameTime;
       if (tick % ${check_interval} !== 0) return;
-      Connection.setMemoryByPath(
-        null,
-        "rooms." + roomScope.Room.roomName + ".lastViewed",
-        roomScope.Room.gameTime
+      Connection.getMemoryByPath(null, "rooms." + roomName).then(
+        function(baseRoomData) {
+          if (!baseRoomData) {
+            Connection.setMemoryByPath(null, "rooms." + roomName, {});
+          }
+          Connection.setMemoryByPath(
+            null,
+            "rooms." + roomScope.Room.roomName + ".lastViewed",
+            roomScope.Room.gameTime
+          );
+        }
       );
     });
     window._room_tracker_injected = true;
@@ -166,7 +206,12 @@ const inject_room_tracker = (check_interval: number = CONSTANTS.CLIENT_ABUSE_ROO
     replace_log("Injecting RoomTracker", script);
     global.client_abuse.injected.room_tracker = true;
   }
-  global.client_abuse.get_current_room = () => {
+  /**
+   * gets the rooms viewed in the past {@link check_interval} ticks
+   *
+   * @returns {string[]} list of active rooms
+   */
+  global.client_abuse.get_current_rooms = (): string[] => {
     Memory.rooms ??= {};
     const recent_rooms = Object.keys(Memory.rooms).filter(
       (r) => (Memory.rooms[r]?.last_viewed || 0) > Game.time - check_interval
@@ -210,7 +255,7 @@ declare global {
       client_abuse: {
         disable_console_summary?: typeof disable_console_summary;
         enable_console_summary?: typeof enable_console_summary;
-        get_current_room?: () => string[];
+        get_current_rooms?: () => string[];
         inject_all?: () => void;
         inject_console_summary?: typeof inject_console_summary;
         inject_room_tracker?: typeof inject_room_tracker;

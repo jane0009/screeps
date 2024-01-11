@@ -1,6 +1,13 @@
 import { MEMORY_CACHE } from "./methods";
 import { default_rehydrater, Rehydrater } from "./rehydrate";
 
+/**
+ * memory cache decorator, class-wide
+ *
+ * @param {CACHE_KEY} key the cache key
+ * @param {Rehydrater} rehydrater the rehydrater method to use
+ * @returns {decorator} decorator function
+ */
 export const memory_cache = (key: (instance: any) => string, rehydrater: Rehydrater = default_rehydrater) => {
   return (target: unknown, property_key: string | number): void => {
     Object.defineProperty(target, property_key, {

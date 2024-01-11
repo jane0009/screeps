@@ -15,6 +15,12 @@ declare global {
   }
 }
 
+/**
+ * stub
+ *
+ * @param {OwnedStructure} object stub
+ * @returns {boolean} stub
+ */
 const repair_filter = (object: OwnedStructure) =>
   object.my !== false &&
   object.structureType !== STRUCTURE_WALL &&
@@ -22,6 +28,9 @@ const repair_filter = (object: OwnedStructure) =>
   object.hits < object.hitsMax &&
   object.hits < object.hitsMax - 500;
 
+/**
+ * stub
+ */
 export const loop = (): void => {
   if (Game.time % 100 === 0) {
     for (const name in Memory.creeps) {
@@ -113,10 +122,22 @@ export const loop = (): void => {
       }
 
       if (body !== null) {
-        spawns = spawns || room.find(FIND_MY_SPAWNS, { filter: (object) => object.spawning === null });
+        spawns =
+          spawns ||
+          room.find(FIND_MY_SPAWNS, {
+            /**
+             * stub
+             *
+             * @param {any} object stub
+             * @returns {boolean} stub
+             */
+            filter: (object) => object.spawning === null
+          });
         if (spawns.length > 0) {
           const spawn = spawns.pop();
-          if (!spawn) continue;
+          if (!spawn) {
+            continue;
+          }
           spawn.spawnCreep(body, `${room.name}:${Game.time}`, { memory: { room: spawn.room.name } });
         }
       }
@@ -176,13 +197,21 @@ export const loop = (): void => {
           }
           if (repair.length > 0) {
             target = repair.pop();
-            if (target === null || target === undefined) break;
+            if (target === null || target === undefined) {
+              break;
+            }
             result = creep.repair(target);
             break;
           }
 
           target = creep.pos.findClosestByRange(
             creep.room.find(FIND_FLAGS, {
+              /**
+               * stub
+               *
+               * @param {any} flag stub
+               * @returns {boolean} stub
+               */
               filter: (flag) => flag.color === COLOR_YELLOW && flag.secondaryColor === COLOR_GREY
             })
           );
@@ -192,12 +221,20 @@ export const loop = (): void => {
           }
 
           target = room.controller;
-          if (target === null || target === undefined) break;
+          if (target === null || target === undefined) {
+            break;
+          }
           result = creep.upgradeController(target);
         } while (false);
       } else {
         do {
           target = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {
+            /**
+             * stub
+             *
+             * @param {any} object stub
+             * @returns {boolean} stub
+             */
             filter: (object) => object.resourceType === RESOURCE_ENERGY
           });
           if (target !== null) {
@@ -216,6 +253,12 @@ export const loop = (): void => {
           });
           if (sources.length === 0) {
             sources = creep.room.find(FIND_FLAGS, {
+              /**
+               * stub
+               *
+               * @param {any} flag stub
+               * @returns {boolean} stub
+               */
               filter: (flag) => flag.color === COLOR_YELLOW && flag.secondaryColor === COLOR_YELLOW
             });
           }
@@ -233,6 +276,12 @@ export const loop = (): void => {
             creep.memory.full = true;
           } else {
             target = creep.room.find(FIND_FLAGS, {
+              /**
+               * stub
+               *
+               * @param {any} object stub
+               * @returns {boolean} stub
+               */
               filter: (object) => object.color === COLOR_RED && object.secondaryColor === COLOR_WHITE
             });
             if (target.length > 0) {

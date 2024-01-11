@@ -1,4 +1,5 @@
 import { LOGGING } from "utils";
+import { COMPRESSION_TYPE } from "utils/compression";
 
 /* ---- KERNEL ---- */
 
@@ -15,9 +16,19 @@ export const KERNEL_READY_QUEUE_TICK_MULTIPLIER = 3;
 
 export const SCHEDULER_NO_TASKS_WAIT_TIME = 5;
 
+/* ---- MEMORY ---- */
+
+export const MEMORY_MANAGER_COMPRESSION_ENABLED = true;
+export const MEMORY_MANAGER_COMPRESSION_TYPE: COMPRESSION_TYPE = COMPRESSION_TYPE.BASE32768;
+export const MEMORY_MANAGER_SAVE_INTERVAL = 10;
+
 /* ---- CLIENT ABUSE ---- */
 export const CLIENT_ABUSE_DEFAULT_CONSOLE_SUMMARY_REGEX = "ERROR|WARN|DEBUG";
 export const CLIENT_ABUSE_DEFAULT_CONSOLE_SUMMARY_MESSAGE_LIMIT = 50;
 export const CLIENT_ABUSE_DEFAULT_TIMER_CHECK_INTERVAL = 7500;
 export const CLIENT_ABUSE_ROOM_TRACKER_CHECK_INTERVAL = 50;
 export const CLIENT_ABUSE_INJECT_MESSAGE_STYLE = "background-color: orange; color: black;";
+
+/* ---- TASKS ---- */
+
+export const TASK_ROOM_VISUAL_MANAGER_NO_ROOMS_WAIT_TIME = 5;

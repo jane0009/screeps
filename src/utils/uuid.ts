@@ -2,29 +2,55 @@ const map = "0123456789ABCDEF".split("");
 
 export type UUID = string;
 
-function convolute_timestamp(n: number, l: number): string {
-  // let str = "";
-  let num = n.toString(16);
-  while (num.length < l) {
-    num = "0" + num;
+/**
+ * class for generating UUIDs
+ *
+ * @class
+ */
+export class UUID_GENERATOR {
+  /**
+   * gets a UUID, split into three sections
+   *
+   * @param {number} section_length the length of each section
+   * @param {string} category optionally, set the first section to a given string
+   * @returns {UUID} the generated UUID
+   */
+  public static get_uuid(section_length = 8, category?: string): UUID {
+    const t = Game.time;
+    const r1 = category || this.get_rand_str(section_length);
+    const r2 = this.convolute_timestamp(t, section_length);
+    const r3 = this.get_rand_str(section_length);
+
+    return `${r1}-${r2}-${r3}`;
   }
-  return num.toUpperCase();
-  // return str;
-}
-
-function get_rand_str(n: number): string {
-  const r = [];
-  for (let i = 0; i < n; i++) {
-    r.push(map[Math.floor(Math.random() * map.length)]);
+  /**
+   * turns the current game tick into a hex string
+   *
+   * @param {number} time the current game time
+   * @param {number} result_length the length of the hex string
+   * @returns {string} the hex string
+   */
+  private static convolute_timestamp(time: number, result_length: number): string {
+    // let str = "";
+    let num = time.toString(16);
+    while (num.length < result_length) {
+      num = "0" + num;
+    }
+    return num.toUpperCase();
+    // return str;
   }
-  return r.join("");
-}
 
-export function get_uuid(n = 8, category: string | undefined = undefined): UUID {
-  const t = Game.time;
-  const r1 = category || get_rand_str(n);
-  const r2 = convolute_timestamp(t, n);
-  const r3 = get_rand_str(n);
-
-  return `${r1}-${r2}-${r3}`;
+  /**
+   * gets a randomized string of a given length
+   *
+   * @param {number} result_length the length of the string
+   * @returns {string} the string
+   */
+  private static get_rand_str(result_length: number): string {
+    const r = [];
+    for (let i = 0; i < result_length; i++) {
+      r.push(map[Math.floor(Math.random() * map.length)]);
+    }
+    return r.join("");
+  }
 }

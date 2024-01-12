@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { CONSTANTS } from "system";
+import { CONSTANTS, TIMER } from "utils";
+import { LOG_INTERFACE } from "./logging";
 
 /**
  * used for injection
@@ -168,6 +169,9 @@ const start_room_view_notifier_timer = () => {
  * @param {number} check_interval how often to check the active room
  */
 const inject_room_tracker = (check_interval: number = CONSTANTS.CLIENT_ABUSE_ROOM_TRACKER_CHECK_INTERVAL) => {
+  if (!global.client_abuse.log) {
+    global.client_abuse.log = global.log_manager.get_logger("ClientAbuse");
+  }
   global.client_abuse.injected ??= {};
   if (!global.client_abuse.injected.room_tracker) {
     const script = `<script>
@@ -190,11 +194,11 @@ const inject_room_tracker = (check_interval: number = CONSTANTS.CLIENT_ABUSE_ROO
       Connection.getMemoryByPath(null, "rooms." + roomName).then(
         function(baseRoomData) {
           if (!baseRoomData) {
-            Connection.setMemoryByPath(null, "rooms." + roomName, {});
+            return;
           }
           Connection.setMemoryByPath(
             null,
-            "rooms." + roomScope.Room.roomName + ".lastViewed",
+            "rooms." + roomScope.Room.roomName + ".last_viewed",
             roomScope.Room.gameTime
           );
         }
@@ -218,6 +222,35 @@ const inject_room_tracker = (check_interval: number = CONSTANTS.CLIENT_ABUSE_ROO
     );
     return recent_rooms;
   };
+  /**
+   * room tracker timer to handle keeping the room memory present
+   */
+  const room_setup_timer = () => {
+    if (!Game || !Game.rooms) {
+      global.client_abuse.log?.warn("Game or Game.rooms does not exist, skipping room setup");
+      return;
+    } else {
+      for (const room_name in Game.rooms) {
+        Memory.rooms ??= {};
+        if (!Memory.rooms[room_name]) {
+          Memory.rooms[room_name] = {};
+        }
+      }
+    }
+  };
+  if (!global.client_abuse.room_setup_timer_id) {
+    global.client_abuse.room_setup_timer_id = TIMER.SET_INTERVAL(
+      room_setup_timer,
+      CONSTANTS.CLIENT_ABUSE_ROOM_TRACKER_CHECK_INTERVAL
+    );
+  } else {
+    TIMER.CLEAR_TIMER(global.client_abuse.room_setup_timer_id);
+    global.client_abuse.room_setup_timer_id = TIMER.SET_INTERVAL(
+      room_setup_timer,
+      CONSTANTS.CLIENT_ABUSE_ROOM_TRACKER_CHECK_INTERVAL
+    );
+  }
+  // CANNOT run on inject, because memory is not initialized yet
 };
 
 global.client_abuse ??= {};
@@ -227,6 +260,9 @@ global.client_abuse.disable_console_summary = disable_console_summary;
 global.client_abuse.inject_room_view_notifier = inject_room_view_notifier;
 global.client_abuse.inject_room_tracker = inject_room_tracker;
 global.client_abuse.inject_all = function () {
+  if (!global.client_abuse.log) {
+    global.client_abuse.log = global.log_manager.get_logger("ClientAbuse");
+  }
   if ("sim" in Game.rooms) {
     console.log("Cannot inject in sim.");
     return;
@@ -261,10 +297,13 @@ declare global {
         inject_room_tracker?: typeof inject_room_tracker;
         inject_room_view_notifier?: typeof inject_room_view_notifier;
         injected?: {
+          all?: boolean;
           console_summary?: boolean;
           room_tracker?: boolean;
           room_view_notifier?: boolean;
         };
+        log?: LOG_INTERFACE;
+        room_setup_timer_id?: number;
         start_all?: () => void;
       };
     }

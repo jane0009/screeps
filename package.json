@@ -64,6 +64,7 @@
   },
   "dependencies": {
     "base32768": "^3.0.1",
+    "buffer": "^6.0.3",
     "screeps-inscribe": "^0.2.0",
     "screeps-profiler": "^2.0.1",
     "source-map": "~0.6.1"

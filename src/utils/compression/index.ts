@@ -2,8 +2,8 @@ import BASE32768_COMPRESSOR from "./base32768";
 import BASE64_COMPRESSOR from "./base64";
 
 export enum COMPRESSION_TYPE {
-  BASE32768,
-  BASE64
+  BASE64,
+  BASE32768
 }
 
 export interface COMPRESSOR {

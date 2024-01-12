@@ -1,6 +1,5 @@
 import profiler from "screeps-profiler";
-import { LOGGING } from "utils";
-import * as CONSTANTS from "../constants";
+import { CONSTANTS, LOGGING } from "utils";
 import { KERNEL } from "../kernel";
 import {
   ASSIGN_INVALIDATE_FUNCTION,

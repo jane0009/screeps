@@ -48,6 +48,7 @@ declare global {
     interface Global {
       log_focus?: string;
       log_manager: LOG_MANAGER;
+      pedantic_debug: LOG_INTERFACE;
       performance_log: LOG_INTERFACE;
     }
   }

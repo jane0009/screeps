@@ -32,6 +32,12 @@ module.exports = {
       "getUsed",
       "defineProperty",
       "WeakMap",
+      "powerCreeps",
+      "strokeWidth",
+      "topLeftPos",
+      "lineStyle",
+      "backgroundPadding",
+      "backgroundColor",
       // screeps profiler
       "registerClass",
       "registerObject",

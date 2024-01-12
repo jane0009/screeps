@@ -1,4 +1,5 @@
 import { decode, encode } from "base32768";
+import { Buffer } from "buffer";
 import { COMPRESSOR } from ".";
 
 /**

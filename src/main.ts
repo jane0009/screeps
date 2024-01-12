@@ -1,42 +1,63 @@
 import profiler from "screeps-profiler";
-import { CONSTANTS, KERNEL } from "system";
-import { LOGGING } from "utils";
-import { ERROR_MAPPER } from "utils/error_mapper";
+import { KERNEL } from "system";
+import { INSERT_ALL_TASKS } from "tasks";
+import { CONSTANTS, ERROR_MAPPER, LOGGING, MEMORY_MANAGER, TIMER } from "utils";
 import "./extends";
 import { loop as minimal_ai } from "./minimal_ai";
 import "./utils/client_abuse";
+
+// runs only on reload
+global.log_manager = new LOGGING.LOG_MANAGER(CONSTANTS.KERNEL_DEFAULT_LOG_LEVEL);
+global.pedantic_debug = global.log_manager.get_logger("Global_Pedantic");
+global.performance_log = global.log_manager.get_logger("Performance");
+const kernel = new KERNEL();
+kernel.init();
+// global.log_manager.blacklist_all(["Performance", "Kernel_Pedantic"]);
+global.log_manager.set_source_levels({
+  main: LOGGING.LOG_LEVEL.INFO,
+  global_pedantic: LOGGING.LOG_LEVEL.INFO,
+  memory: LOGGING.LOG_LEVEL.INFO,
+  performance: LOGGING.LOG_LEVEL.INFO,
+  kernel_pedantic: LOGGING.LOG_LEVEL.INFO
+});
 
 profiler.enable();
 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 if (global.client_abuse?.inject_all) {
   global.client_abuse.inject_all();
 }
-// runs only on reload
-global.log_manager = new LOGGING.LOG_MANAGER(CONSTANTS.KERNEL_LOG_LEVEL);
-global.performance_log = global.log_manager.get_logger("Performance");
-const kernel = new KERNEL();
-kernel.init();
-// global.log_manager.blacklist_all(["Performance", "Kernel_Pedantic"]);
-global.log_manager.set_source_levels({
-  performance: LOGGING.LOG_LEVEL.INFO,
-  kernel_pedantic: LOGGING.LOG_LEVEL.INFO,
-  kernel_queue: LOGGING.LOG_LEVEL.VERBOSE
-});
+// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+if (global.client_abuse?.start_all) {
+  global.client_abuse.start_all();
+}
+
+INSERT_ALL_TASKS(kernel);
 
 export const loop = ERROR_MAPPER.wrap_loop(() => {
+  MEMORY_MANAGER.load();
   profiler.wrap(() => {
     minimal_ai();
     kernel.tick();
+    TIMER.HANDLE_TIMERS();
   });
+  MEMORY_MANAGER.end_tick();
 });
 
-// respawn in w8n3
+// TODO: respawn in w8n3
 
 /*
  * typeclass:
  * type Printable<A> = {
  *   print(value: A): string
  * }
+ *
+ * const printableNumber: Printable<number> = {
+ *  print(value: number): string {
+ *   return value.toString();
+ *  }
+ * }
+ *
+ * used most in fp. see `fp-ts`
  */
 
 /*

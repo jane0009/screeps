@@ -27,6 +27,15 @@ export abstract class TASK<T extends any> {
   }
 
   /**
+   * gets the objects assigned to this task
+   *
+   * @returns {T[]} the assigned objects
+   */
+  public get assigned(): T[] {
+    return this._assigned;
+  }
+
+  /**
    * defers the task for {@link time} ticks
    *
    * @param {number} time the number of ticks to defer

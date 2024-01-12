@@ -1,6 +1,5 @@
 import profiler from "screeps-profiler";
-import { LOGGING, SPANS } from "utils";
-import * as CONSTANTS from "./constants";
+import { CONSTANTS, LOGGING, SPANS } from "utils";
 import * as TASK from "./task";
 import { SCHEDULER } from "./task/scheduler";
 
@@ -80,7 +79,7 @@ export class KERNEL {
     this._log_manager = global.log_manager;
     this._kernel_loggers = {
       main: this._log_manager.get_logger("Kernel"),
-      performance: this._log_manager.get_logger("Performance"),
+      performance: global.performance_log,
       pedantic_debugging: this._log_manager.get_logger("Kernel_Pedantic"),
       queue: this._log_manager.get_logger("Kernel_Queue")
     };
@@ -260,6 +259,7 @@ export class KERNEL {
         delete this._invalidate_functions[pid];
       }
     }
+
     this._previous_overhead = rt_wait_meter.used_exact;
     this._kernel_loggers.performance.verbose(`Total kqueue overhead was ${this._previous_overhead} CPU`);
   }
@@ -286,19 +286,23 @@ export class KERNEL {
   private _handle_running_queue(queue_type: QUEUE_TYPE) {
     for (const pid of this._running_queue[queue_type]) {
       const task = this._task_list[pid];
+      if (!this._invalidate_functions[pid]) {
+        this._kernel_loggers.main.debug(`Generating invalidate function for ${task.constructor.name} (PID ${pid})`);
+        this._invalidate_functions[pid] = task.recalculate_assigned();
+      }
       const result = task.tick();
-      this._kernel_loggers.queue.debug(`result of ${task.constructor.name}:`, result);
+      this._kernel_loggers.main.debug(`result of ${task.constructor.name}:`, result);
       switch (result.return_type) {
         case TASK.TASK_RETURN_TYPE.WAIT: {
           // remove from the running queue
           this._running_queue[queue_type].splice(this._running_queue[queue_type].indexOf(pid), 1);
           const wait_event = result.wait_event;
           if (wait_event === undefined) {
-            this._kernel_loggers.queue.warn(`${pid} waiting for nothing, treating as terminated`);
+            this._kernel_loggers.main.warn(`${pid} waiting for nothing, treating as terminated`);
             continue;
           }
           if (result.context === undefined) {
-            this._kernel_loggers.queue.warn(`${pid} waiting for ${wait_event} with no context, treating as terminated`);
+            this._kernel_loggers.main.warn(`${pid} waiting for ${wait_event} with no context, treating as terminated`);
             continue;
           }
           const next_check_time =
@@ -314,7 +318,7 @@ export class KERNEL {
           continue;
         }
         case TASK.TASK_RETURN_TYPE.ABORT: {
-          this._kernel_loggers.queue.warn(`${pid} aborted...`, result.context);
+          this._kernel_loggers.main.warn(`${pid} aborted...`, result.context);
         }
         // eslint-disable-next-line no-fallthrough
         case TASK.TASK_RETURN_TYPE.EXIT: {
@@ -324,6 +328,13 @@ export class KERNEL {
         // eslint-disable-next-line no-fallthrough
         case TASK.TASK_RETURN_TYPE.CONTINUE:
         default: {
+          const invalid = this._invalidate_functions[pid](task.assigned);
+          if (invalid) {
+            this._kernel_loggers.main.debug(
+              `Invalidating ${task.constructor.name} (PID ${pid}) due to invalidate function`
+            );
+            delete this._invalidate_functions[pid];
+          }
           continue;
         }
       }

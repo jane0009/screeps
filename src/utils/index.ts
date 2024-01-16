@@ -1,3 +1,5 @@
+export * as CACHE from "./cache";
+export * from "./classid";
 export * as COMPRESSION from "./compression";
 export * as CONSTANTS from "./constants";
 export { ERROR_MAPPER } from "./error_mapper";
@@ -5,4 +7,6 @@ export * as LOGGING from "./logging";
 export { MEMORY_MANAGER } from "./memory";
 export * as OBJECT from "./object";
 export * as SPANS from "./spans";
+export * from "./structures";
 export * as TIMER from "./timer";
+export * from "./uuid";

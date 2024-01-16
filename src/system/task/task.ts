@@ -1,5 +1,9 @@
 import { KERNEL } from "system/kernel";
+import { CACHE } from "utils";
 import { ASSIGN_INVALIDATE_FUNCTION, PID, TASK_CONTEXT, TASK_PRIORITY, TASK_RETURN } from "./definitions";
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const { memory_cache, key_by_id } = CACHE;
 
 /**
  * base class for all tasks
@@ -10,6 +14,8 @@ import { ASSIGN_INVALIDATE_FUNCTION, PID, TASK_CONTEXT, TASK_PRIORITY, TASK_RETU
 export abstract class TASK<T extends any> {
   public actual_impact = 0;
   public cpu = 0;
+
+  @memory_cache(key_by_id)
   protected _assigned: T[] = [];
   protected _context: TASK_CONTEXT;
   protected _kernel: KERNEL;
@@ -72,6 +78,11 @@ export abstract class TASK<T extends any> {
   public get parent(): PID {
     return this._context.parent;
   }
+
+  /**
+   * get the task's id (for caching)
+   */
+  abstract get id(): string;
 
   /**
    * gets the "inherent priority" of the task

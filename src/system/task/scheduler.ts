@@ -18,6 +18,8 @@ import { TASK } from "./task";
  * @implements {TASK}
  */
 export class SCHEDULER extends TASK<any> {
+  public id = "SCHEDULER";
+
   private _log: LOGGING.LOG_INTERFACE;
   private _wants_spawn: TASK_CONSTRUCTOR[] = [];
   /**

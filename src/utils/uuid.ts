@@ -9,6 +9,19 @@ export type UUID = string;
  */
 export class UUID_GENERATOR {
   /**
+   * gets a UUID for a class or object
+   *
+   * @param {string} class_name the class or object to get a UUID for
+   * @param {number} section_length the length of each section
+   * @returns {UUID} the generated UUID
+   */
+  public static get_class_uuid(class_name: string, section_length = 12): UUID {
+    const r1 = class_name;
+    const r2 = this.get_rand_str(section_length);
+    return `${r1}_${r2}`;
+  }
+
+  /**
    * gets a UUID, split into three sections
    *
    * @param {number} section_length the length of each section
@@ -21,7 +34,7 @@ export class UUID_GENERATOR {
     const r2 = this.convolute_timestamp(t, section_length);
     const r3 = this.get_rand_str(section_length);
 
-    return `${r1}-${r2}-${r3}`;
+    return `${r1}_${r2}_${r3}`;
   }
   /**
    * turns the current game tick into a hex string

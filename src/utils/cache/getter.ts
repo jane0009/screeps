@@ -1,5 +1,5 @@
 import { CACHE_KEY } from "./keys";
-import { CACHE_METHOD, heap_cache, MEMORY_CACHE } from "./methods";
+import { CACHE_METHOD, HEAP_CACHE, MEMORY_CACHE } from "./methods";
 import { default_rehydrater } from "./rehydrate";
 
 type Decorator = (target: unknown, property_key: string | number) => void;
@@ -56,9 +56,9 @@ const key_by_instance = (i: unknown): unknown => i;
  */
 export const heap_cache_getter = (
   getter: (instance: any) => unknown,
-  invalidate_cache: ((value: unknown) => boolean) | undefined
+  invalidate_cache?: ((value: unknown) => boolean) | undefined
 ): Decorator => {
-  return cache_getter(heap_cache, key_by_instance, getter, undefined, invalidate_cache);
+  return cache_getter(HEAP_CACHE, key_by_instance, getter, undefined, invalidate_cache);
 };
 
 /**

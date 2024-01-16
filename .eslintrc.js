@@ -38,11 +38,24 @@ module.exports = {
       "lineStyle",
       "backgroundPadding",
       "backgroundColor",
+      "SourceMemory",
+      "getTerrain",
+      "energyCapacity",
+      "hitsMax",
+      // tests
+      "beforeEach",
+      "isTrue",
+      "isUndefined",
+      "persistValue",
+      "notPersistValue",
+      "isDefined",
       // screeps profiler
       "registerClass",
       "registerObject",
       "registerFN",
       // screeps objects (god there's so many)
+      "constructionSites",
+      "getObjectById",
       "_HasName",
       "_HasId",
       "_HasRoomPosition",
@@ -306,7 +319,7 @@ module.exports = {
       }
     }],
     // snake case
-    "snakecasejs/snakecasejs": "error",
+    "snakecasejs/snakecasejs": "warn",
     // normal eslint rules
     "arrow-parens": ["off", "as-needed"],
     "camelcase": "off",

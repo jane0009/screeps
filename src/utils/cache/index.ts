@@ -3,6 +3,7 @@
 // https://github.com/mortenbroesby/screeps-lru-cache
 
 export * from "./decorators";
+export * from "./getter";
 export * from "./keys";
 export * from "./methods";
 export * from "./rehydrate";

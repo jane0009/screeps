@@ -1,8 +1,8 @@
 {
-  "name": "screeps-typescript-starter",
-  "version": "3.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "jane-screeps",
+  "version": "0.1.0",
+  "description": "Screeps code",
+  "main": "dist/main.js",
   "//": "If you add or change the names of destinations in screeps.json, make sure you update these scripts to reflect the changes",
   "scripts": {
     "lint": "eslint --format=compact \"src/**/*.ts\"",
@@ -48,6 +48,7 @@
     "eslint-plugin-jsdoc": "38.1.6",
     "eslint-plugin-prettier": "^3.4.0",
     "eslint-plugin-snakecasejs": "^2.2.0",
+    "esm": "^3.2.25",
     "lodash": "^3.10.1",
     "mocha": "^5.2.0",
     "prettier": "^2.3.2",
@@ -66,6 +67,7 @@
     "base32768": "^3.0.1",
     "buffer": "^6.0.3",
     "screeps-inscribe": "^0.2.0",
+    "screeps-packrat": "https://github.com/bencbartlett/screeps-packrat",
     "screeps-profiler": "^2.0.1",
     "source-map": "~0.6.1"
   }

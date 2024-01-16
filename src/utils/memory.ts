@@ -15,6 +15,7 @@ export class MEMORY_MANAGER {
     powerCreeps: {},
     flags: {},
     rooms: {},
+    sources: {},
     spawns: {},
     cache: {}
   };

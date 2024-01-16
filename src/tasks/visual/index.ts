@@ -1,3 +1,4 @@
+import { EXTENDED_ROOM } from "extends/room";
 import { KERNEL, TASK } from "system";
 import { CONSTANTS, LOGGING } from "utils";
 
@@ -6,7 +7,9 @@ import { CONSTANTS, LOGGING } from "utils";
  *
  * @class
  */
-export class ROOM_VISUAL_MANAGER_TASK extends TASK.TASK<Room> {
+export class ROOM_VISUAL_MANAGER_TASK extends TASK.TASK<EXTENDED_ROOM> {
+  public id = "ROOM_VISUAL_MANAGER_TASK";
+
   private _log: LOGGING.LOG_INTERFACE;
   /**
    * creates an instance of ROOM_VISUAL_MANAGER_TASK
@@ -52,7 +55,8 @@ export class ROOM_VISUAL_MANAGER_TASK extends TASK.TASK<Room> {
    *
    * @returns {ASSIGN_INVALIDATE_FUNCTION<Room>} function to invalidate assigned rooms
    */
-  public recalculate_assigned(): TASK.ASSIGN_INVALIDATE_FUNCTION<Room> {
+  public recalculate_assigned(): TASK.ASSIGN_INVALIDATE_FUNCTION<EXTENDED_ROOM> {
+    this._assigned ??= [];
     const recalculate_expected_game_time = Game.time - (CONSTANTS.CLIENT_ABUSE_ROOM_TRACKER_CHECK_INTERVAL + 1);
     const rooms_memory = Memory.rooms ?? {};
     if (Object.keys(rooms_memory).length === 0) {
@@ -61,10 +65,10 @@ export class ROOM_VISUAL_MANAGER_TASK extends TASK.TASK<Room> {
       for (const room_name in rooms_memory) {
         const room = Game.rooms[room_name];
         if (room && (room.memory.last_viewed || 0) >= recalculate_expected_game_time) {
-          this._assigned.push(room);
+          this._assigned.push(new EXTENDED_ROOM(room));
         }
       }
-      return (rooms: Room[]) => {
+      return (rooms: EXTENDED_ROOM[]) => {
         const rooms_in_memory = Memory.rooms ?? {};
         const expected_game_time = Game.time - (CONSTANTS.CLIENT_ABUSE_ROOM_TRACKER_CHECK_INTERVAL + 1);
         for (const room_to_check of rooms) {
@@ -107,7 +111,12 @@ export class ROOM_VISUAL_MANAGER_TASK extends TASK.TASK<Room> {
       assigned.map((room) => room.name)
     );
     for (const room of assigned) {
-      this._handle_room(room.visual);
+      let visual = room.visual;
+      if (visual?.circle === undefined) {
+        this._log.verbose(`Room ${room.name} did not have a visual, creating one`);
+        visual = new RoomVisual(room.name);
+      }
+      this._handle_room(visual);
     }
     return {
       return_type: TASK.TASK_RETURN_TYPE.CONTINUE

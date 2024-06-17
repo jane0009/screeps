@@ -43,7 +43,17 @@ export const loop = ERROR_MAPPER.wrap_loop(() => {
   MEMORY_MANAGER.end_tick();
 });
 
-// TODO: respawn in w8n3
+// TODO
+// - creep spawning task
+// - move harvesting from min ai to tasks
+// -- convert traveler
+// -- have traveler visuals as part of visual task
+// -- change default creep moveTo to use traveler
+// -- harvesters prioritize tombstones and dropped energy
+// -- will not spawn more creeps than available spots on sources
+// -- upgraders will not block sources
+// - upgrading task
+// - planning and building tasks, separately
 
 /*
  * typeclass:

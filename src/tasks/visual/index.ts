@@ -62,9 +62,15 @@ export class ROOM_VISUAL_MANAGER_TASK extends TASK.TASK<EXTENDED_ROOM> {
     if (Object.keys(rooms_memory).length === 0) {
       return () => true;
     } else {
+      // mark all rooms with spawns as main rooms, which will
+      // always show visuals regardless of whether client abuse works
+      for (const spawn of Object.values(Game.spawns)) {
+        spawn.room.memory ??= {};
+        spawn.room.memory.main_room = true;
+      }
       for (const room_name in rooms_memory) {
         const room = Game.rooms[room_name];
-        if (room && (room.memory.last_viewed || 0) >= recalculate_expected_game_time) {
+        if (room && ((room.memory.last_viewed || 0) >= recalculate_expected_game_time || room.memory.main_room)) {
           this._assigned.push(new EXTENDED_ROOM(room));
         }
       }
@@ -76,8 +82,9 @@ export class ROOM_VISUAL_MANAGER_TASK extends TASK.TASK<EXTENDED_ROOM> {
             this._log.debug(`Invalidating room, no memory for ${room_to_check.name}`);
             return true;
           } else if (
-            !rooms_in_memory[room_to_check.name].last_viewed ||
-            (rooms_in_memory[room_to_check.name].last_viewed || 0) < expected_game_time
+            !rooms_in_memory[room_to_check.name].main_room &&
+            (!rooms_in_memory[room_to_check.name].last_viewed ||
+              (rooms_in_memory[room_to_check.name].last_viewed || 0) < expected_game_time)
           ) {
             this._log.debug(`Invalidating room, stale memory for ${room_to_check.name}`);
             return true;
@@ -116,7 +123,7 @@ export class ROOM_VISUAL_MANAGER_TASK extends TASK.TASK<EXTENDED_ROOM> {
         this._log.verbose(`Room ${room.name} did not have a visual, creating one`);
         visual = new RoomVisual(room.name);
       }
-      this._handle_room(visual);
+      this._handle_room(room.room, visual);
     }
     return {
       return_type: TASK.TASK_RETURN_TYPE.CONTINUE
@@ -126,15 +133,47 @@ export class ROOM_VISUAL_MANAGER_TASK extends TASK.TASK<EXTENDED_ROOM> {
   /**
    * helper function to handle visuals for a single room
    *
+   * @param {Room} room the room to handle visuals for
    * @param {RoomVisual} visual the RoomVisual object for the given room
    */
-  private _handle_room(visual: RoomVisual): void {
-    visual.circle(25, 25, {
-      radius: 2,
-      fill: "#dddddd",
-      opacity: 0.5,
-      stroke: "#ff00ff",
-      strokeWidth: 0.1
-    });
+  private _handle_room(room: Room, visual: RoomVisual): void {
+    // visual.circle(25, 25, {
+    //   radius: 2,
+    //   fill: "#dddddd",
+    //   opacity: 0.5,
+    //   stroke: "#ff00ff",
+    //   strokeWidth: 0.1
+    // });
+    const creeps = room.find(FIND_MY_CREEPS);
+    for (const creep of creeps) {
+      if (creep.memory._move) {
+        const { dest, path, room: move_room } = creep.memory._move;
+        if (move_room === room.name) {
+          visual.circle(dest.x, dest.y, {
+            radius: 0.35,
+            fill: "#60c060",
+            opacity: 0.07,
+            stroke: "#f01af0",
+            strokeWidth: 0.05
+          });
+        }
+        // draw a line along creep's intended path
+      }
+    }
+  }
+}
+
+declare global {
+  interface RoomMemory {
+    main_room?: boolean;
+  }
+
+  interface CreepMemory {
+    _move?: {
+      dest: RoomPosition;
+      path: string;
+      room: string;
+      time: number;
+    };
   }
 }

@@ -90,3 +90,6 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# Server
+screeps-server/config.yml

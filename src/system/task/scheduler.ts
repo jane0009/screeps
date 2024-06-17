@@ -68,6 +68,21 @@ export class SCHEDULER extends TASK<any> {
   }
 
   /**
+   * indicates to the scheduler that a task wants to be spawned
+   *
+   * @param {TASK_CONSTRUCTOR} task the task to spawn
+   */
+  public register_task(task: TASK_CONSTRUCTOR): void {
+    this._wants_spawn.push(task);
+    this._wants_spawn.sort((a, b) => {
+      const inst_a = new a({ pid: 0, parent: 0 }, this._kernel);
+      const inst_b = new b({ pid: 0, parent: 0 }, this._kernel);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      return inst_a.inherent_priority - inst_b.inherent_priority;
+    });
+  }
+
+  /**
    * See {@link TASK.run}
    */
   public run(): TASK_RETURN {
@@ -78,7 +93,7 @@ export class SCHEDULER extends TASK<any> {
       if (this._kernel.exists_of_type(task_constructor)) {
         continue;
       }
-      this._log.verbose(`Spawning new ${task_constructor.name}`);
+      this._log.verbose(`Attempt spawning new ${task_constructor.name}`);
       this._kernel.spawn(this, task_constructor);
       did_schedule = true;
     }
@@ -97,21 +112,6 @@ export class SCHEDULER extends TASK<any> {
         }
       };
     }
-  }
-
-  /**
-   * indicates to the scheduler that a task wants to be spawned
-   *
-   * @param {TASK_CONSTRUCTOR} task the task to spawn
-   */
-  public wants_spawn(task: TASK_CONSTRUCTOR): void {
-    this._wants_spawn.push(task);
-    this._wants_spawn.sort((a, b) => {
-      const inst_a = new a({ pid: 0, parent: 0 }, this._kernel);
-      const inst_b = new b({ pid: 0, parent: 0 }, this._kernel);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      return inst_a.inherent_priority - inst_b.inherent_priority;
-    });
   }
 }
 

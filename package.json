@@ -9,9 +9,11 @@
     "build": "rollup -c",
     "watch": "rollup -cw",
     "push-main": "rollup -c --environment DEST:main",
+    "push-splus": "rollup -c --environment DEST:splus",
     "test": "npm run test-unit",
     "test-unit": "mocha test/unit/**/*.ts",
-    "watch-main": "rollup -cw --environment DEST:main"
+    "watch-main": "rollup -cw --environment DEST:main",
+    "watch-splus": "rollup -cw --environment DEST:splus"
   },
   "repository": {
     "type": "git",

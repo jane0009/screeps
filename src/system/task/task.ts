@@ -42,6 +42,21 @@ export abstract class TASK<T extends any> {
   }
 
   /**
+   * checks whether the scheduler can spawn this task
+   *
+   * @param {object} plist the list of process ids
+   * @returns {boolean} whether the task can spawn
+   */
+  public can_spawn(plist: { [key: PID]: TASK<any> }): boolean {
+    for (const pid in plist) {
+      if (plist[pid].constructor.name === this.constructor.name) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
    * defers the task for {@link time} ticks
    *
    * @param {number} time the number of ticks to defer

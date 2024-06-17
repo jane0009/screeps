@@ -16,8 +16,8 @@ export * from "./visual";
  */
 export const INSERT_ALL_TASKS = (kernel: KERNEL): void => {
   const scheduler = kernel.scheduler;
-  scheduler.wants_spawn(CACHE_TEST_TASK);
-  scheduler.wants_spawn(ROOM_VISUAL_MANAGER_TASK);
-  scheduler.wants_spawn(SOURCE_UPKEEP_TASK);
-  scheduler.wants_spawn(SPAWN_HANDLER_TASK);
+  scheduler.register_task(CACHE_TEST_TASK);
+  scheduler.register_task(ROOM_VISUAL_MANAGER_TASK);
+  scheduler.register_task(SOURCE_UPKEEP_TASK);
+  scheduler.register_task(SPAWN_HANDLER_TASK);
 };

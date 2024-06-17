@@ -92,3 +92,14 @@ export function clone<T>(obj: T): T {
     return result as T;
   }
 }
+
+/**
+ * Sum an array
+ *
+ * @param {T[]} arr the array to sum
+ * @param {Function} func the function to apply to each element
+ * @returns {number} the sum of the array
+ */
+export function sum<T>(arr: T[], func: (value: T) => number): number {
+  return arr.reduce((acc, value) => acc + func(value), 0);
+}

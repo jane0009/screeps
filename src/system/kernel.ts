@@ -134,6 +134,12 @@ export class KERNEL {
    * @param  {TASK.TASK_CONSTRUCTOR} child the child task
    */
   public spawn(parent: TASK.TASK<any>, child: TASK.TASK_CONSTRUCTOR): void {
+    const fake_child = new child({ pid: -1, parent: -1 }, this);
+    const can_spawn = fake_child.can_spawn(this._task_list);
+    if (!can_spawn) {
+      this._kernel_loggers.main.verbose(`Task ${child.name} did not pass its spawn requirements, skipping.`);
+      return;
+    }
     const child_context = {
       pid: this._next_pid,
       parent: parent.pid
